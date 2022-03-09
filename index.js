@@ -92,7 +92,6 @@ async function run() {
         app.post('/reviews', async(req, res) => {
             const review = req.body;
             const result = await reviewsCollection.insertOne(review);
-            console.log(result);
             res.json(result);
         })
 
@@ -108,7 +107,6 @@ async function run() {
             const id = req.params.id;
             const query = {_id: ObjectId(id)};
             const result = await bookingsCollection.deleteOne(query);
-            console.log(result);
             res.json(result);
         });
 
@@ -116,7 +114,6 @@ async function run() {
         app.post('/users', async(req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
-            console.log(result);
             res.json(result);
         });
 
