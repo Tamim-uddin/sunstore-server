@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const port = process.env.PORT || 5000;
 
@@ -53,6 +54,28 @@ async function run() {
             const cursor = bookingsCollection.find({});
             const bookings = await cursor.toArray();
             res.json(bookings);
+        })
+
+          // send specific booking for payment
+        app.get('/bookings/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await bookingsCollection.findOne(query);
+            res.json(result);
+        })
+
+        // update a booking for complete the payment 
+        app.put('/bookings/:id', async(req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updateDoc ={ 
+                $set: {
+                    payment: payment
+                }
+            };
+            const result = await bookingsCollection.updateOne(filter, updateDoc);
+            res.json(result);
         })
 
         // send all bookings via email
@@ -126,6 +149,18 @@ async function run() {
             isAdmin = true;
         }
         res.json({admin: isAdmin})
+    })
+
+    // payment
+    app.post('/create-payment-intent', async(req, res) => {
+        const paymentInfo = req.body;
+        const amount = paymentInfo.price * 100;
+        const paymentIntent = await stripe.paymentIntents.create({
+            currency: 'usd',
+            amount: amount,
+            payment_method_types: ['card']
+        });
+        res.json({clientSecret: paymentIntent.client_secret})
     })
 
 
